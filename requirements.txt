@@ -1,4 +1,6 @@
-streamlit==1.36.0
-sqlalchemy
+streamlit
 python-dotenv
 requests
+sqlalchemy
+google-auth
+google-auth-oauthlib
