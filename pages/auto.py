@@ -1,5 +1,5 @@
 import streamlit as st
-from services.ai_utils import call_ai
+from services.gpt_utils import call_ai
 from services.db_utils import save_boss_problem, save_diagram_with_manual
 
 def run_auto_mode():
