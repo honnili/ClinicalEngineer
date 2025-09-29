@@ -4,3 +4,4 @@ requests
 sqlalchemy
 google-auth
 google-auth-oauthlib
+openai
