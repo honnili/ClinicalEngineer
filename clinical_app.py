@@ -2,9 +2,8 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import streamlit as st
 from login import login_google
-from ClinicalEngineer.pages import auto
-from ClinicalEngineer.modes import dashboard
 from pages import auto
+from modes import dashboard
 from services import gpt_utils
 
 def main():
