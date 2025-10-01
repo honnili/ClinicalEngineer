@@ -1,6 +1,6 @@
 # services/gpt_utils.py
 import streamlit as st
-from openai import openai
+from openai import OpenAI
 
 # secrets.toml からキーを読み込む
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
