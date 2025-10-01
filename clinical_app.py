@@ -1,6 +1,9 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import streamlit as st
 from login import login_google
-from pages import auto, dashboard
+from ClinicalEngineer.pages import auto
+from ClinicalEngineer.modes import dashboard
 
 def main():
     st.set_page_config(page_title="学習プラットフォーム", layout="wide")
