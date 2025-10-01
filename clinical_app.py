@@ -4,6 +4,8 @@ import streamlit as st
 from login import login_google
 from ClinicalEngineer.pages import auto
 from ClinicalEngineer.modes import dashboard
+from pages import auto
+from services import gpt_utils
 
 def main():
     st.set_page_config(page_title="学習プラットフォーム", layout="wide")
