@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
-from services.db_utils import get_tag_stats
+from services.db_utils import get_tag_statistics
 
 def render():
     st.subheader("📉 弱点抽出モード")
 
-    stats = get_tag_stats()
+    stats = get_tag_statistics()
     if not stats:
         st.info("まだ解答データがありません。テストやボス問題を解いてから確認してください。")
         return

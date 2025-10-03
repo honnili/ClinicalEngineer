@@ -33,3 +33,6 @@ def gpt_mermaid(prompt: str, temperature: float = 0.2):
 def summarize_notes(text: str):
     prompt = f"以下の学習メモを200字程度で要約し、重要点を3箇条で箇条書きにしてください。\n\n{text}"
     return gpt_text(prompt, temperature=0.3)
+
+def call_ai(prompt: str, temperature: float = 0.2):
+    return gpt_text(prompt, temperature)

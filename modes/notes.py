@@ -2,8 +2,9 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from services.db_utils import save_note, list_notes
 from services.diagram_utils import generate_diagram
-from services.ai_utils import generate_quiz
-import json
+from services.ai_utils import generate_quiz, generate_tags
+import json, io
+from PIL import Image
 
 def render():
     st.subheader("📝 実習ノート（完全統合版）")
@@ -42,16 +43,24 @@ def render():
             diagram_bytes = diagram
 
     # --- タグ & リンク ---
-    tags = st.multiselect("🏷️ タグを追加", ["呼吸器", "循環", "薬理", "看護技術", "解剖", "病態"])
+    # 手動タグに加えてAI自動タグも生成
+    manual_tags = st.multiselect("🏷️ タグを追加", ["呼吸器", "循環", "薬理", "看護技術", "解剖", "病態"])
     ref_link = st.text_input("🔗 参考文献や論文のURL（任意）")
 
     # --- 保存 ---
     if st.button("保存する"):
         img_bytes = None
         if canvas_result.image_data is not None:
-            img_bytes = canvas_result.image_data.tobytes()
+            img = Image.fromarray((canvas_result.image_data[:, :, :3]).astype("uint8"))
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            img_bytes = buf.getvalue()
         elif diagram_bytes is not None:
             img_bytes = diagram_bytes
+
+        # AIでタグ自動生成
+        auto_tags = generate_tags(manual_text) if manual_text else []
+        tags = list(set(manual_tags + auto_tags))
 
         meta = {"tags": tags, "ref_link": ref_link}
         save_note(
@@ -59,8 +68,9 @@ def render():
             text=json.dumps({"manual": manual_text, "meta": meta}, ensure_ascii=False),
             image_bytes=img_bytes
         )
-        st.success("ノートを保存しました！")
-            # --- 検索フィルタ ---
+        st.success(f"ノートを保存しました！（タグ: {', '.join(tags)}）")
+
+    # --- 検索フィルタ ---
     st.markdown("---")
     st.subheader("📚 保存済みノート")
     search_tags = st.multiselect("タグで絞り込み", ["呼吸器", "循環", "薬理", "看護技術", "解剖", "病態"])
@@ -109,6 +119,9 @@ def render():
                 # --- AIクイズ化 ---
                 if st.button(f"このノートからクイズを作る #{it['id']}", key=f"quiz_{it['id']}"):
                     quiz = generate_quiz(manual_text)
-                    st.write("Q:", quiz["question"])
-                    if quiz["answer"]:
-                        st.info(f"答え: {quiz['answer']}")
+                    if isinstance(quiz, dict):
+                        st.write("Q:", quiz.get("question", ""))
+                        if quiz.get("answer"):
+                            st.info(f"答え: {quiz['answer']}")
+                    else:
+                        st.write(quiz)

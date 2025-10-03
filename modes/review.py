@@ -1,8 +1,25 @@
 import streamlit as st
 import json
-from services.db_utils import list_notes, mark_review_done, get_review_status, get_tag_stats
-from utils.review import get_review_targets
+import pandas as pd
+from services.db_utils import list_notes, get_tag_stats
 
+# --- 復習対象を抽出する関数（ダミー実装） ---
+def get_review_targets(notes, days_threshold=3):
+    # ここでは全ノートを対象にしている（本当は日数計算など入れる）
+    return [(n, 1) for n in notes]
+
+# --- 復習状態を取得する関数（セッション管理版） ---
+def get_review_status(note_id):
+    status_map = st.session_state.get("review_status", {})
+    return status_map.get(note_id, "pending")
+
+# --- 復習状態を更新する関数（セッション管理版） ---
+def mark_review_done(note_id, status="done"):
+    if "review_status" not in st.session_state:
+        st.session_state["review_status"] = {}
+    st.session_state["review_status"][note_id] = status
+
+# --- メインUI ---
 def render():
     st.subheader("⏰ 復習リマインダー")
 
@@ -14,12 +31,19 @@ def render():
         return
 
     # --- 弱点タグを抽出 ---
-    stats = get_tag_stats()
-    weak_tags = []
+    stats = get_tag_stats(user_id=st.session_state.get("user_id", "global"))
+
     if stats:
-        df = pd.DataFrame(stats)
-        df["正答率"] = df["correct"] / (df["correct"] + df["wrong"])
+        st.markdown("### 📊 タグ別正答率")
+        for tag, data in stats.items():
+            st.write(f"{tag}: {data['correct']} / {data['total']} 正解 （正答率 {data['rate']}%）")
+
+        df = pd.DataFrame(stats).T.reset_index().rename(columns={"index": "tag"})
+        df["wrong"] = df["total"] - df["correct"]
+        df["正答率"] = df["correct"] / df["total"]
         weak_tags = df.sort_values("正答率").head(3)["tag"].tolist()
+    else:
+        weak_tags = []
 
     # --- 復習対象を弱点優先で並べ替え ---
     def priority(note):

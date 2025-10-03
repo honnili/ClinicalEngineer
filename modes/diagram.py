@@ -1,16 +1,81 @@
-# modes/diagram.py
 import streamlit as st
-from services.diagram_utils import generate_diagram
+import json, re
+from services.db_utils import save_boss_archive
+from services.gpt_utils import gpt_text
+from services.diagram_utils import render_mermaid
 
+# --- JSON安全パース ---
+def safe_json_loads(text: str):
+    try:
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            return json.loads(match.group(0))
+        return None
+    except Exception:
+        return None
+
+# --- 図解問題生成 ---
+def _gen_diagram(big_field: str, sub_field: str):
+    prompt = f"""
+    臨床工学技士向けの{sub_field}に関する図解問題を1問作成してください。
+    出力は必ず JSON のみで返してください。余計な文章は一切書かないでください。
+    {{
+      "question": "問題文",
+      "options": ["選択肢A", "選択肢B", "選択肢C"],
+      "answer": "正解の選択肢",
+      "explanation": "解説文",
+      "mermaid": "graph TD; ..."
+    }}
+    """
+    return gpt_text(prompt, temperature=0.1)
+
+# --- メイン描画 ---
 def render():
-    st.subheader("図解問題")
-    mode = st.radio("モード", ["閲覧", "解答"])
+    st.subheader("図解問題モード")
 
-    if mode == "閲覧":
-        topic = st.text_input("図解テーマ（例：人工呼吸器アラーム対応フロー）", "人工呼吸器アラーム対応フロー")
-        field = st.selectbox("分野", ["呼吸療法装置", "人工心肺装置", "透析装置", "医用電気機器"])
-        if st.button("図解を生成"):
-            generate_diagram("図解閲覧", topic, field)
-    else:
-        st.write("図を見て解答（採点ロジックは後で追加可能）")
-        st.info("今は図解表示のみ。採点は次のスプリントで実装予定。")
+    # 大分類と中分類の辞書
+    field_dict = {
+        "基礎医学": ["解剖学", "生理学", "病理学", "薬理学"],
+        "医用工学概論": ["電気電子工学", "情報工学", "材料工学", "医用計測"],
+        "呼吸": ["人工呼吸器", "酸素療法", "血液ガス", "換気モニタリング"],
+        "循環": ["ペースメーカ", "補助循環（IABP・ECMO）", "心電図", "血圧モニタ"],
+        "血液浄化": ["血液透析", "腹膜透析", "血漿交換", "吸着療法"],
+        "代謝・栄養": ["酸塩基平衡", "電解質管理", "栄養管理"],
+        "医用機器安全管理": ["電気安全", "機器点検", "感染対策", "リスクマネジメント"],
+        "手術室・集中治療": ["麻酔器", "人工心肺", "ICU管理", "モニタリング機器"],
+        "ME機器全般": ["基本原理", "保守管理", "トラブルシュート"],
+        "臨床応用": ["救急医療", "在宅医療", "チーム医療"]
+    }
+
+    # 本文内に選択UI
+    big_field = st.selectbox("大分類を選んでください", list(field_dict.keys()))
+    sub_field = st.selectbox("中分類を選んでください", field_dict[big_field])
+
+     # ボタンを押したときだけ生成
+    if st.button("問題を生成する"):
+        raw = _gen_diagram(big_field, sub_field)
+        data = safe_json_loads(raw)
+
+        if not data:
+            st.error("図解問題の生成に失敗しました")
+            st.write(raw)
+            return
+
+        st.markdown(f"**Q. {data['question']}**")
+        render_mermaid(data["mermaid"])
+
+        # 閲覧／解答モード切り替え
+        mode = st.radio("モードを選んでください", ["閲覧", "解答"], horizontal=True)
+
+        if mode == "閲覧":
+            st.info(data["explanation"])
+
+        elif mode == "解答":
+            choice = st.radio("回答を選んでください", data["options"], key="diagram_choice")
+            if st.button("解答する", key="diagram_answer"):
+                correct = (choice == data["answer"])
+                if correct:
+                    st.success("正解！ 🎉")
+                else:
+                    st.error(f"不正解… 正解は {data['answer']} です")
+                st.info(data["explanation"])

@@ -1,7 +1,44 @@
 import streamlit as st
 import json
 from services.db_utils import save_boss_problem, save_note
-from modes.learning_utils import _ai_complete_json  # 既存のAI呼び出し関数
+from services.gpt_utils import gpt_text
+from services.gpt_utils import gpt_text
+
+def _build_prompt(source: str, mode: str, difficulty: str, answer_style: str,
+                  major_section: str, middle_section: str, field: str) -> str:
+    """
+    シナリオRPGや自動生成モードで使うプロンプトを構築する
+    """
+    prompt = f"""
+    You are generating a clinical engineering training scenario.
+    Source: {source}
+    Mode: {mode}
+    Difficulty: {difficulty}
+    Answer style: {answer_style}
+    Major section: {major_section}
+    Middle section: {middle_section}
+    Field: {field}
+
+    Please output a JSON with keys:
+    - question
+    - options
+    - answer
+    - explanation
+    - meta
+    """
+    return prompt
+
+
+def _ai_complete_json(prompt: str, temperature: float = 0.3):
+    """
+    GPTにJSON形式で回答させるための共通関数
+    """
+    text = gpt_text(prompt, temperature=temperature)
+    return text
+
+def _ai_complete_json(prompt: str, temperature: float = 0.3):
+    text = gpt_text(prompt, temperature=temperature)
+    return text
 
 # --- 回答形式ラベルを内部キーに変換する関数 ---
 def map_answer_style(label: str) -> str:
