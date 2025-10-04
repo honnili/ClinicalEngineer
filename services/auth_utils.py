@@ -44,4 +44,4 @@ def login_google():
         st.session_state["nickname"] = load_nickname(st.session_state["user_id"]) or userinfo.get("name", st.session_state["email"])
 
         st.query_params.clear()
-        st.experimental_rerun()
+        st.rerun()
