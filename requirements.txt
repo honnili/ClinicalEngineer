@@ -6,3 +6,4 @@ google-auth
 google-auth-oauthlib
 openai
 authlib
+streamlit-drawable-canvas

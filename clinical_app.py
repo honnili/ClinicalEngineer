@@ -1,7 +1,7 @@
 import streamlit as st
 from services.db_utils import init_db
 from services.auth_utils import login_google
-from modes import daily, boss, diagram, manual, notes, practice, company
+from modes import daily, boss, diagram, manual, practice, company
 from modes import review, scenario_auto, scenario_rpg
 from modes import dashboard, weakpoints
 

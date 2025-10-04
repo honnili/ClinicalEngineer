@@ -1,6 +1,6 @@
 import streamlit as st
 import io
-from streamlit_drawable_canvas import st_canvas
+
 from services.db_utils import save_note, list_notes
 from services.gpt_utils import summarize_notes
 

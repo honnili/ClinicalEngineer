@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_drawable_canvas import st_canvas
+
 from services.db_utils import save_note, list_notes
 from services.diagram_utils import generate_diagram
 from services.ai_utils import generate_quiz, generate_tags
