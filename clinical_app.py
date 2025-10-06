@@ -1,7 +1,7 @@
 import streamlit as st
 from services.db_utils import init_db
 from services.auth_utils import login_google
-from modes import daily, boss, diagram, manual, practice, company
+from modes import daily, boss, diagram, koutaro, practice, company
 from modes import review, scenario_auto, scenario_rpg
 from modes import dashboard, weakpoints
 
@@ -14,8 +14,6 @@ st.set_page_config(
 st.title("臨床工学シミュレーション")
 st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。")
 
-
-st.set_page_config(page_title="臨床工学技士シミュレーター", layout="wide")
 init_db()
 
 def main():
@@ -51,7 +49,7 @@ def main():
         elif mode == "図解問題":
             diagram.render()
         elif mode == "光太郎モード":
-            manual.render()
+            koutaro.render()
         elif mode == "国家試験モード":
             company.render()
 
