@@ -10,6 +10,10 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
+def get_connection():
+    # DB に接続してコネクションを返す
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
     # ボス問題アーカイブ
     cur.execute("""
     CREATE TABLE IF NOT EXISTS boss_archive (
