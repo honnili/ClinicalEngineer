@@ -56,16 +56,21 @@ def render():
     with col2:
         mode = st.radio("モードを選んでください", ["閲覧", "解答"], horizontal=True)
 
-    # ボタンを押したときだけ生成
+    # 問題生成ボタン
     if st.button("問題を生成する"):
         raw = _gen_diagram(big_field, sub_field)
         data = safe_json_loads(raw)
-
         if not data:
             st.error("図解問題の生成に失敗しました")
             st.write(raw)
             return
+        # ← session_state に保存
+        st.session_state["diagram_data"] = data
+        st.session_state["answered"] = False
 
+    # --- 問題表示 ---
+    data = st.session_state.get("diagram_data")
+    if data:
         st.markdown(f"**Q. {data['question']}**")
         render_mermaid(data["mermaid"])
 
@@ -80,9 +85,14 @@ def render():
                 submitted = st.form_submit_button("解答する")
 
                 if submitted:
-                    correct = (choice == data["answer"])
-                    if correct:
-                        st.success("正解！ 🎉")
-                    else:
-                        st.error(f"不正解… 正解は {data['answer']} です")
-                    st.info(data["explanation"])
+                    st.session_state["answered"] = True
+                    st.session_state["choice"] = choice
+
+            # 回答後にだけ解説を表示
+            if st.session_state.get("answered", False):
+                correct = (st.session_state["choice"] == data["answer"])
+                if correct:
+                    st.success("正解！ 🎉")
+                else:
+                    st.error(f"不正解… 正解は {data['answer']} です")
+                st.info(data["explanation"])
