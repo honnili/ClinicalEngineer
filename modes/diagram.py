@@ -70,7 +70,7 @@ def generate_diagram(big_field: str, sub_field: str):
 # -------------------------
 # 図解モード本体
 # -------------------------
-def render_diagram():
+def render():
     st.subheader("図解問題モード")
 
     col1, col2 = st.columns(2)
