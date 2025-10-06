@@ -3,6 +3,7 @@ import json, re
 from services.db_utils import save_boss_archive
 from services.gpt_utils import gpt_text
 from services.diagram_utils import render_mermaid
+from datetime import datetime
 
 # --- JSON安全パース ---
 def safe_json_loads(text: str):
@@ -47,11 +48,15 @@ def render():
         "臨床応用": ["救急医療", "在宅医療", "チーム医療"]
     }
 
-    # 本文内に選択UI
-    big_field = st.selectbox("大分類を選んでください", list(field_dict.keys()))
-    sub_field = st.selectbox("中分類を選んでください", field_dict[big_field])
+    # --- 最初に全部選ばせる ---
+    col1, col2 = st.columns(2)
+    with col1:
+        big_field = st.selectbox("大分類を選んでください", list(field_dict.keys()))
+        sub_field = st.selectbox("中分類を選んでください", field_dict[big_field])
+    with col2:
+        mode = st.radio("モードを選んでください", ["閲覧", "解答"], horizontal=True)
 
-     # ボタンを押したときだけ生成
+    # ボタンを押したときだけ生成
     if st.button("問題を生成する"):
         raw = _gen_diagram(big_field, sub_field)
         data = safe_json_loads(raw)
@@ -64,13 +69,12 @@ def render():
         st.markdown(f"**Q. {data['question']}**")
         render_mermaid(data["mermaid"])
 
-        # 閲覧／解答モード切り替え
-        mode = st.radio("モードを選んでください", ["閲覧", "解答"], horizontal=True)
-
         if mode == "閲覧":
+            # 生成直後から解説を表示
             st.info(data["explanation"])
 
         elif mode == "解答":
+            # 回答を選んでから解説を表示
             choice = st.radio("回答を選んでください", data["options"], key="diagram_choice")
             if st.button("解答する", key="diagram_answer"):
                 correct = (choice == data["answer"])
