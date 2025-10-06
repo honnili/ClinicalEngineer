@@ -74,12 +74,15 @@ def render():
             st.info(data["explanation"])
 
         elif mode == "解答":
-            # 回答を選んでから解説を表示
-            choice = st.radio("回答を選んでください", data["options"], key="diagram_choice")
-            if st.button("解答する", key="diagram_answer"):
-                correct = (choice == data["answer"])
-                if correct:
-                    st.success("正解！ 🎉")
-                else:
-                    st.error(f"不正解… 正解は {data['answer']} です")
-                st.info(data["explanation"])
+            # フォームで回答と送信を一括処理
+            with st.form("answer_form"):
+                choice = st.radio("回答を選んでください", data["options"])
+                submitted = st.form_submit_button("解答する")
+
+                if submitted:
+                    correct = (choice == data["answer"])
+                    if correct:
+                        st.success("正解！ 🎉")
+                    else:
+                        st.error(f"不正解… 正解は {data['answer']} です")
+                    st.info(data["explanation"])
