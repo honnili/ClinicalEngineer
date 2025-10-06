@@ -64,37 +64,48 @@ def render():
     num_questions = st.slider("出題数を選んでください", 1, 5, 3)
 
     if st.button("シナリオ問題を生成する"):
-        for i in range(num_questions):
-            qdata = generate_multidisciplinary_question(partners)
-            if not qdata:
-                st.error("問題生成に失敗しました")
-                continue
+        st.session_state["multi_questions"] = [
+            generate_multidisciplinary_question(partners) for _ in range(num_questions)
+        ]
 
-            st.markdown(f"### 第{i+1}問")
-            st.write(f"**状況:** {qdata['situation']}")
+    questions = st.session_state.get("multi_questions", [])
+    for i, qdata in enumerate(questions):
+        if not qdata:
+            continue
 
-            # 役割分担の明示
-            st.write("### チーム構成と役割")
-            for role, desc in qdata.get("roles", {}).items():
-                st.markdown(f"- **{role}**: {desc}")
+        st.markdown(f"### 第{i+1}問")
+        st.write(f"**状況:** {qdata['situation']}")
 
-            st.write(f"**Q: {qdata['question']}**")
+        # 役割分担の明示
+        st.write("### チーム構成と役割")
+        for role, desc in qdata.get("roles", {}).items():
+            st.markdown(f"- **{role}**: {desc}")
 
-            # 複数回答形式
+        st.write(f"**Q: {qdata['question']}**")
+
+        # --- 解答フォーム ---
+        with st.form(f"answer_form_{i}"):
             choices = st.multiselect("対応を選んでください", qdata["options"], key=f"multi_choice_{i}")
-            if st.button(f"解答する_{i}"):
-                correct_set = set(qdata["answer"])
-                chosen_set = set(choices)
+            submitted = st.form_submit_button("解答する")
 
-                if chosen_set == correct_set:
-                    st.success("正解！ 🎉")
-                else:
-                    st.error(f"不正解… 正しい対応は {', '.join(qdata['answer'])} です")
+            if submitted:
+                st.session_state[f"answered_{i}"] = True
+                st.session_state[f"selected_{i}"] = choices
 
-                st.info(qdata["explanation"])
+        # --- 解答後の表示 ---
+        if st.session_state.get(f"answered_{i}", False):
+            chosen_set = set(st.session_state[f"selected_{i}"])
+            correct_set = set(qdata["answer"])
 
-                # 多層フィードバック
-                if "feedback" in qdata:
-                    st.markdown("### 他職種からのフィードバック")
-                    for role, fb in qdata["feedback"].items():
-                        st.markdown(f"- **{role}**: {fb}")
+            if chosen_set == correct_set:
+                st.success("正解！ 🎉")
+            else:
+                st.error(f"不正解… 正しい対応は {', '.join(qdata['answer'])} です")
+
+            st.info(qdata["explanation"])
+
+            # 多層フィードバック
+            if "feedback" in qdata:
+                st.markdown("### 他職種からのフィードバック")
+                for role, fb in qdata["feedback"].items():
+                    st.markdown(f"- **{role}**: {fb}")
