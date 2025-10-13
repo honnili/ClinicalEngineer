@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from services.db_utils import save_boss_problem, save_note
+from services.db_utils import save_boss_problem
 from services.gpt_utils import gpt_text
 from services.gpt_utils import gpt_text
 

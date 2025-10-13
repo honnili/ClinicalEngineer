@@ -1,8 +1,8 @@
 import streamlit as st
 from services.db_utils import init_db
 from services.auth_utils import login_google
-from modes import daily, boss, diagram, koutaro, practice, company
-from modes import review, scenario_auto, scenario_rpg
+from modes import daily, boss, diagram, koutaro, research, company
+from modes import scenario_auto, scenario_rpg
 from modes import dashboard, weakpoints
 
 st.set_page_config(
@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 st.title("臨床工学シミュレーション")
-st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。")
+st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。AIによる解答、解説なので100%という保証はありません。")
 
 init_db()
 
@@ -21,7 +21,7 @@ def main():
     login_google()
 
     if "user_id" not in st.session_state:
-        st.info("未ログインです")
+        st.info("早くログインしなよ^-^")
         return
 
     st.success(f"ログイン中: {st.session_state['nickname']}")
@@ -30,7 +30,7 @@ def main():
     st.sidebar.title("モード選択")
     category = st.sidebar.selectbox(
         "カテゴリを選んでください",
-        ["学習系", "ノート系", "シナリオ系", "分析系"]
+        ["学習系", "論文系", "シナリオ系", "分析系"]
     )
 
     # --- 学習系 ---
@@ -53,16 +53,12 @@ def main():
         elif mode == "国家試験モード":
             company.render()
 
-    # --- ノート系 ---
-    elif category == "ノート系":
-        mode = st.sidebar.radio("モード", ["実習ノート", "実習モード", "復習リマインダー"])
-        if mode == "実習ノート":
-            notes.render()
-        elif mode == "実習モード":
-            practice.render()
-        elif mode == "復習リマインダー":
-            review.render()
-
+    # --- 論文系 ---
+    elif category == "論文系":
+        mode = st.sidebar.radio("モード", ["論文参照モード"])
+        if mode == "論文参照":
+            research.render()
+       
     # --- シナリオ系 ---
     elif category == "シナリオ系":
         mode = st.sidebar.radio("モード", ["多職種共同モード", "シナリオRPG"])
