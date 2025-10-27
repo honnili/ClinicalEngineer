@@ -437,3 +437,28 @@ def fetch_diagrams_by_tag(tag, user_id, limit=5):
             results.append({"diagram_mermaid": code, "manual_text": notes, "tags": tags})
     return results
 
+def save_boss_archive(user_id, question, options, answer, explanation,
+                      choice, correct, mode, field, difficulty, meta=None):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    INSERT INTO boss_archive
+    (user_id, question, options, answer, explanation, choice, correct,
+     mode, field, difficulty, timestamp, meta)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        user_id,
+        question,
+        json.dumps(options, ensure_ascii=False),
+        answer,
+        explanation,
+        choice,
+        1 if correct else 0,
+        mode,
+        field,
+        difficulty,
+        datetime.now().isoformat(timespec="seconds"),
+        json.dumps(meta or {}, ensure_ascii=False)
+    ))
+    conn.commit()
+    conn.close()
