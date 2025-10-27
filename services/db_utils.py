@@ -436,3 +436,24 @@ def fetch_diagrams_by_tag(tag, user_id, limit=5):
         if tag in tags:
             results.append({"diagram_mermaid": code, "manual_text": notes, "tags": tags})
     return results
+
+def get_tag_statistics(user_id: str):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+        SELECT tag, SUM(correct), COUNT(*)
+        FROM quiz_results
+        WHERE user_id=?
+        GROUP BY tag
+    """, (user_id,))
+    rows = c.fetchall()
+    conn.close()
+
+    stats = {}
+    for tag, correct, total in rows:
+        stats[tag] = {
+            "correct": correct,
+            "total": total,
+            "accuracy": round(correct / total * 100, 1) if total > 0 else 0
+        }
+    return stats
