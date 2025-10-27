@@ -1,6 +1,5 @@
 import streamlit as st
 import json, re
-from services.db_utils import get_or_create_daily
 from services.gpt_utils import gpt_text
 from services.diagram_utils import render_mermaid
 

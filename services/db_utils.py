@@ -436,4 +436,3 @@ def fetch_diagrams_by_tag(tag, user_id, limit=5):
         if tag in tags:
             results.append({"diagram_mermaid": code, "manual_text": notes, "tags": tags})
     return results
-
