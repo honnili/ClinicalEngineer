@@ -1,7 +1,10 @@
 import streamlit as st
-import json, re
+import json
+import re
+from datetime import date
 from services.gpt_utils import gpt_text
 from services.diagram_utils import render_mermaid
+from services.db_utils import save_boss_archive
 
 # --- JSON安全パース関数 ---
 def safe_json_loads(text: str):
@@ -13,6 +16,18 @@ def safe_json_loads(text: str):
         return None
     except Exception:
         return None
+
+# --- デイリー問題キャッシュ（1日1回） ---
+def get_or_create_daily(problem_type: str, generator_func):
+    """
+    Streamlitのセッションを利用して、1日1回だけ問題を生成する
+    """
+    key = f"daily_{problem_type}_{date.today()}"
+    
+    if key not in st.session_state:
+        st.session_state[key] = generator_func()
+    
+    return st.session_state[key]
 
 # --- デイリー四択問題 ---
 def _gen_daily_quiz():
@@ -47,6 +62,11 @@ def _gen_daily_diagram():
 
 # --- メイン描画 ---
 def render():
+    # セッション状態の初期化
+    if "user_id" not in st.session_state:
+        st.warning("ログインが必要です")
+        return
+    
     st.subheader("デイリー問題（1日1回・激むず）")
 
     col1, col2 = st.columns(2)
