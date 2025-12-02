@@ -4,8 +4,8 @@ from services.gpt_utils import call_ai
 
 def render(source=None, mode=None, difficulty="中級", answer_style="choice",
            major_section=None, middle_section=None, field=None):
-    st.subheader("🎮 シナリオRPG")
-    # 引数を使うならここで利用
+    profession = st.session_state.get("profession", "臨床工学技士")
+    st.subheader(f"🎮 シナリオRPG（{profession}向け）")
 
     # 初期化
     if "rpg_history" not in st.session_state:
@@ -16,7 +16,7 @@ def render(source=None, mode=None, difficulty="中級", answer_style="choice",
     # --- シナリオ開始 ---
     if st.button("シナリオ開始"):
         prompt = f"""
-        あなたは臨床工学技士です。
+        あなたは{profession}です。
         舞台: {case or "自由に舞台を設定してください"}
 
         RPG風に、状況説明と3つの選択肢を必ずJSON形式で返してください。
@@ -43,6 +43,8 @@ def render(source=None, mode=None, difficulty="中級", answer_style="choice",
         # --- 次のターンへ ---
         if st.button("次へ"):
             prompt = f"""
+            あなたは{profession}です。
+
             これまでのシナリオ:
             {st.session_state['rpg_history']}
 

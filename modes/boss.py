@@ -3,11 +3,12 @@ from services.db_utils import list_boss_problems
 import json
 
 def render():
-    st.subheader("👹 ボス問題アーカイブ（解けなかった問題）")
+    st.subheader(f"👹 ボス問題アーカイブ（{st.session_state['profession']}向け・解けなかった問題）")
 
-    items = list_boss_problems()
+    # 職業ごとに問題を取得
+    items = list_boss_problems(st.session_state["profession"])
     if not items:
-        st.info("まだボス問題はありません。間違えた問題がここに自動保存されます。")
+        st.info(f"{st.session_state['profession']}向けのボス問題はまだありません。間違えた問題がここに自動保存されます。")
         return
 
     for it in items:

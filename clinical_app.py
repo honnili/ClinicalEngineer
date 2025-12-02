@@ -26,6 +26,22 @@ def main():
 
     st.success(f"ログイン中: {st.session_state['nickname']}")
 
+    # --- 職業選択（初回必須） ---
+    if "profession" not in st.session_state:
+        st.session_state["profession"] = st.selectbox(
+            "職業を選んでください",
+            ["臨床工学技士", "歯科衛生士"]
+        )
+        st.success(f"選択された職業: {st.session_state['profession']}")
+
+    # --- サイドバーで職業変更可能 ---
+    with st.sidebar:
+        st.session_state["profession"] = st.selectbox(
+            "職業を変更する",
+            ["臨床工学技士", "歯科衛生士"],
+            index=["臨床工学技士", "歯科衛生士"].index(st.session_state["profession"])
+        )
+
     # --- サイドバーでカテゴリ選択 ---
     st.sidebar.title("モード選択")
     category = st.sidebar.selectbox(
@@ -56,9 +72,9 @@ def main():
     # --- 論文系 ---
     elif category == "論文系":
         mode = st.sidebar.radio("モード", ["論文参照モード"])
-        if mode == "論文参照":
+        if mode == "論文参照モード":
             research.render()
-       
+
     # --- シナリオ系 ---
     elif category == "シナリオ系":
         mode = st.sidebar.radio("モード", ["多職種共同モード", "シナリオRPG"])
@@ -77,5 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    

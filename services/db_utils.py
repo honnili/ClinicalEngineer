@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 DB_PATH = "learning.db"
 
@@ -117,10 +117,10 @@ def save_boss_archive(user_id, question, options, answer, explanation,
     conn.commit()
     conn.close()
 
-def list_boss_problems():
+def list_boss_problems(profession: str):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM boss_archive ORDER BY id DESC")
+    cur.execute("SELECT * FROM boss_archive WHERE field=? ORDER BY id DESC", (profession,))
     rows = cur.fetchall()
     conn.close()
 
@@ -189,8 +189,6 @@ def get_tag_stats(user_id: str):
         }
     return stats
 
-from datetime import date
-
 # -------------------------
 # 問題保存
 # -------------------------
@@ -218,7 +216,7 @@ def save_boss_problem(user_id, difficulty, field, mode, question, options, answe
     """, (
         user_id,
         difficulty,
-        field,
+        field,   # ← 職業をここに入れる
         mode,
         question,
         json.dumps(options, ensure_ascii=False),
@@ -264,18 +262,18 @@ def save_diagram_with_manual(user_id, diagram_code=None, notes="", tags=None, im
     conn.close()
 
 # -------------------------
-# タグ別問題取得
+# タグ別問題取得（職業対応）
 # -------------------------
-def fetch_problems_by_tag(tag, user_id, limit=5):
+def fetch_problems_by_tag(tag, user_id, profession, limit=5):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("""
         SELECT id, question, options, answer, explanation, meta
         FROM problems
-        WHERE user_id=? AND field=?
+        WHERE user_id=? AND field=? AND mode=?
         ORDER BY created_at DESC
         LIMIT ?
-    """, (user_id, tag, limit))
+    """, (user_id, profession, tag, limit))
     rows = c.fetchall()
     conn.close()
     return [
@@ -313,130 +311,9 @@ def fetch_diagrams_by_tag(tag, user_id, limit=5):
             results.append({"diagram_mermaid": code, "manual_text": notes, "tags": tags})
     return results
 
-from datetime import date
-
 # -------------------------
-# 問題保存
+# タグ統計
 # -------------------------
-def save_boss_problem(user_id, difficulty, field, mode, question, options, answer, explanation, meta):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS problems (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            difficulty TEXT,
-            field TEXT,
-            mode TEXT,
-            question TEXT,
-            options TEXT,
-            answer TEXT,
-            explanation TEXT,
-            meta TEXT,
-            created_at TEXT
-        )
-    """)
-    c.execute("""
-        INSERT INTO problems (user_id, difficulty, field, mode, question, options, answer, explanation, meta, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        user_id,
-        difficulty,
-        field,
-        mode,
-        question,
-        json.dumps(options, ensure_ascii=False),
-        answer,
-        explanation,
-        json.dumps(meta, ensure_ascii=False),
-        datetime.now().isoformat()
-    ))
-    conn.commit()
-    conn.close()
-
-# -------------------------
-# 図解保存（tags対応）
-# -------------------------
-def save_diagram_with_manual(user_id, diagram_code=None, notes="", tags=None, image_path=None):
-    if tags is None:
-        tags = []
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS diagrams (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            diagram_code TEXT,
-            notes TEXT,
-            tags TEXT,
-            image_path TEXT,
-            created_at TEXT
-        )
-    """)
-    c.execute("""
-        INSERT INTO diagrams (user_id, diagram_code, notes, tags, image_path, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        user_id,
-        diagram_code,
-        notes,
-        json.dumps(tags, ensure_ascii=False),
-        image_path,
-        datetime.now().isoformat()
-    ))
-    conn.commit()
-    conn.close()
-
-# -------------------------
-# タグ別問題取得
-# -------------------------
-def fetch_problems_by_tag(tag, user_id, limit=5):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        SELECT id, question, options, answer, explanation, meta
-        FROM problems
-        WHERE user_id=? AND field=?
-        ORDER BY created_at DESC
-        LIMIT ?
-    """, (user_id, tag, limit))
-    rows = c.fetchall()
-    conn.close()
-    return [
-        {
-            "id": r[0],
-            "question": r[1],
-            "options": json.loads(r[2]),
-            "answer": r[3],
-            "explanation": r[4],
-            "meta": json.loads(r[5]) if r[5] else {}
-        }
-        for r in rows
-    ]
-
-# -------------------------
-# タグ別図解取得
-# -------------------------
-def fetch_diagrams_by_tag(tag, user_id, limit=5):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        SELECT diagram_code, notes, tags
-        FROM diagrams
-        WHERE user_id=?
-        ORDER BY created_at DESC
-        LIMIT ?
-    """, (user_id, limit))
-    rows = c.fetchall()
-    conn.close()
-
-    results = []
-    for code, notes, tags_json in rows:
-        tags = json.loads(tags_json) if tags_json else []
-        if tag in tags:
-            results.append({"diagram_mermaid": code, "manual_text": notes, "tags": tags})
-    return results
-
 def get_tag_statistics(user_id: str):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

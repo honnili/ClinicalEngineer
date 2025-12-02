@@ -15,14 +15,14 @@ def safe_json_loads(text: str):
         return None
 
 # -------------------------
-# 多職種共同モード用の問題生成
+# 多職種共同モード用の問題生成（職業対応）
 # -------------------------
-def generate_multidisciplinary_question(partners):
+def generate_multidisciplinary_question(partners, profession: str):
     partners_str = "、".join(partners) if partners else "医師・看護師"
     prompt = f"""
-    あなたは臨床工学技士国家試験の出題者です。
+    あなたは{profession}国家試験の出題者です。
     多職種連携（{partners_str}）をテーマにした臨床シナリオ問題を1問作成してください。
-    場面は急変対応、手術、在宅医療、ICU、透析室などからランダムに選んでください。
+    場面は急変対応、手術、在宅医療、ICU、透析室、歯科診療室などからランダムに選んでください。
 
     出力は必ず JSON のみで返してください。余計な文章は書かないでください。
 
@@ -31,9 +31,9 @@ def generate_multidisciplinary_question(partners):
       "roles": {{
         "医師": "診断・治療方針",
         "看護師": "バイタル観察・処置補助",
-        "臨床工学技士": "機器操作・安全管理"
+        "{profession}": "専門的対応・安全管理"
       }},
-      "question": "臨床工学技士としての対応を問う問題文",
+      "question": "{profession}としての対応を問う問題文",
       "options": ["対応A", "対応B", "対応C", "対応D"],
       "answer": ["対応A","対応C"], 
       "explanation": "解説文",
@@ -51,12 +51,13 @@ def generate_multidisciplinary_question(partners):
 # 多職種共同モード本体
 # -------------------------
 def render():
-    st.subheader("多職種共同モード（シナリオ演習・複数回答対応）")
+    profession = st.session_state.get("profession", "臨床工学技士")
+    st.subheader(f"多職種共同モード（{profession}向け・シナリオ演習・複数回答対応）")
 
     # 職種選択
     partners = st.multiselect(
         "一緒にシナリオを進める職種を選んでください",
-        ["医師", "看護師", "薬剤師", "理学療法士", "臨床検査技師"],
+        ["医師", "看護師", "薬剤師", "理学療法士", "臨床検査技師", "歯科衛生士"],
         default=["医師", "看護師"]
     )
     st.info(f"今回のチーム: {', '.join(partners)}")
@@ -65,7 +66,7 @@ def render():
 
     if st.button("シナリオ問題を生成する"):
         st.session_state["multi_questions"] = [
-            generate_multidisciplinary_question(partners) for _ in range(num_questions)
+            generate_multidisciplinary_question(partners, profession) for _ in range(num_questions)
         ]
 
     questions = st.session_state.get("multi_questions", [])

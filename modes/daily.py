@@ -22,40 +22,40 @@ def get_or_create_daily(problem_type: str, generator_func):
     """
     Streamlitのセッションを利用して、1日1回だけ問題を生成する
     """
-    key = f"daily_{problem_type}_{date.today()}"
+    key = f"daily_{problem_type}_{date.today()}_{st.session_state['profession']}"
     
     if key not in st.session_state:
-        st.session_state[key] = generator_func()
+        st.session_state[key] = generator_func(st.session_state["profession"])
     
     return st.session_state[key]
 
 # --- デイリー四択問題 ---
-def _gen_daily_quiz():
-    prompt = """
-    臨床工学技士向けの超難問の四択問題を1問作成してください。
+def _gen_daily_quiz(profession: str):
+    prompt = f"""
+    {profession}向けの超難問の四択問題を1問作成してください。
     出力は必ず JSON のみで返してください。余計な文章は一切書かないでください。
-    {
+    {{
       "question": "問題文",
       "options": ["選択肢A", "選択肢B", "選択肢C", "選択肢D"],
       "answer": "正解の選択肢",
       "explanation": "解説文"
-    }
+    }}
     """
     text = gpt_text(prompt, temperature=0.1)
     return {"text": text}
 
 # --- デイリー図解問題 ---
-def _gen_daily_diagram():
-    prompt = """
-    臨床工学技士向けの超難問の図解問題を1問作成してください。
+def _gen_daily_diagram(profession: str):
+    prompt = f"""
+    {profession}向けの超難問の図解問題を1問作成してください。
     出力は必ず JSON のみで返してください。余計な文章は一切書かないでください。
-    {
+    {{
       "question": "問題文",
       "options": ["選択肢A", "選択肢B", "選択肢C"],
       "answer": "正解の選択肢",
       "explanation": "解説文",
       "mermaid": "graph TD; ..."
-    }
+    }}
     """
     text = gpt_text(prompt, temperature=0.1)
     return {"text": text}
@@ -67,7 +67,11 @@ def render():
         st.warning("ログインが必要です")
         return
     
-    st.subheader("デイリー問題（1日1回・激むず）")
+    if "profession" not in st.session_state:
+        st.warning("職業選択が必要です")
+        return
+    
+    st.subheader(f"デイリー問題（{st.session_state['profession']}向け・1日1回・激むず）")
 
     col1, col2 = st.columns(2)
 
@@ -99,7 +103,7 @@ def render():
                         choice=choice,
                         correct=correct,
                         mode="daily",
-                        field="未分類",
+                        field=st.session_state["profession"],
                         difficulty="激むず"
                     )
                 st.info(data["explanation"])
@@ -133,7 +137,7 @@ def render():
                         choice=choice,
                         correct=correct,
                         mode="diagram",
-                        field="未分類",
+                        field=st.session_state["profession"],
                         difficulty="激むず"
                     )
                 st.info(data["explanation"])

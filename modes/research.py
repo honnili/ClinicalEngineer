@@ -3,7 +3,8 @@ import json
 from services.gpt_utils import gpt_text
 
 def render():
-    st.subheader("📑 論文参照モード")
+    profession = st.session_state.get("profession", "臨床工学技士")
+    st.subheader(f"📑 論文参照モード（{profession}向け）")
 
     # --- モード切り替え ---
     mode = st.radio("モードを選んでください", ["論文クイズ", "引用解説"], horizontal=True)
@@ -13,7 +14,7 @@ def render():
     if st.button("検索"):
         if mode == "論文クイズ":
             prompt = f"""
-            キーワード「{keyword}」に関連する代表的な医学論文を1本紹介してください。
+            {profession}に関連するキーワード「{keyword}」の代表的な医学論文を1本紹介してください。
             さらに、その要約から選択式クイズを1問作成してください。
             出力は必ずJSON形式で返してください。
             {{
@@ -31,7 +32,7 @@ def render():
             """
         else:  # 引用解説モード
             prompt = f"""
-            キーワード「{keyword}」に関連する代表的な医学論文を1本紹介してください。
+            {profession}に関連するキーワード「{keyword}」の代表的な医学論文を1本紹介してください。
             出力は必ずJSON形式で返してください。
             {{
               "title": "論文タイトル",

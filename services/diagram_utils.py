@@ -26,10 +26,14 @@ def render_mermaid(code: str, height: int = 420):
     """
     st.components.v1.html(mermaid_html, height=height, scrolling=True)
 
-def generate_diagram(title: str, question_text: str, field: str):
+def generate_diagram(title: str, question_text: str):
     st.subheader(title)
+
+    # 職業をセッションから取得
+    profession = st.session_state.get("profession", "臨床工学技士")
+
     prompt = (
-        f"Create a Mermaid flowchart (graph TD) for a clinical engineering problem in {field}. "
+        f"Create a Mermaid flowchart (graph TD) for a {profession} problem. "
         f"Include key decision points and actions related to: {question_text}. Output only Mermaid."
     )
     code = gpt_mermaid(prompt, temperature=0.1)
