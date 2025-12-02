@@ -5,7 +5,7 @@ from openai import OpenAI
 import traceback
 
 # 環境変数優先、なければ Streamlit secrets
-api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
 if not api_key or not isinstance(api_key, str):
     raise RuntimeError("OPENAI_API_KEY が設定されていません。環境変数か .streamlit/secrets.toml に設定してください。")
