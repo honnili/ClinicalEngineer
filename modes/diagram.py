@@ -1,143 +1,53 @@
 import streamlit as st
-import json, re
+import json
 from services.gpt_utils import gpt_text
 from services.diagram_utils import render_mermaid
 
-field_dict = {
-    "基礎医学": ["解剖学", "生理学", "病理学", "薬理学"],
-    "医用工学概論": ["電気電子工学", "情報工学", "材料工学", "医用計測"],
-    "呼吸": ["人工呼吸器", "酸素療法", "血液ガス", "換気モニタリング"],
-    "循環": ["ペースメーカ", "補助循環（IABP・ECMO）", "心電図", "血圧モニタ"],
-    "血液浄化": ["血液透析", "腹膜透析", "血漿交換", "吸着療法"],
-    "代謝・栄養": ["酸塩基平衡", "電解質管理", "栄養管理"],
-    "医用機器安全管理": ["電気安全", "機器点検", "感染対策", "リスクマネジメント"],
-    "手術室・集中治療": ["麻酔器", "人工心肺", "ICU管理", "モニタリング機器"],
-    "ME機器全般": ["基本原理", "保守管理", "トラブルシュート"],
-    "臨床応用": ["救急医療", "在宅医療", "チーム医療"],
+# 職業ごとのフィルター
+major_options_dict = {
+    "臨床工学技士": {
+        "呼吸": ["人工呼吸器", "酸素療法", "血液ガス", "換気モニタリング"],
+        "循環": ["ペースメーカ", "補助循環（IABP・ECMO）", "心電図", "血圧モニタ"],
+        "血液浄化": ["血液透析", "腹膜透析", "血漿交換", "吸着療法"],
+    },
+    "歯科衛生士": {
+        "予防処置": ["歯石除去", "プラークコントロール", "フッ化物応用", "シーラント", "PMTC"],
+        "臨床歯科": ["歯周病学", "小児歯科学", "高齢者歯科", "口腔外科補助", "矯正歯科補助"],
+    }
 }
 
-# -------------------------
-# JSON安全パース
-# -------------------------
-def safe_json_loads(text: str):
-    try:
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-        if match:
-            return json.loads(match.group(0))
-        return None
-    except Exception:
-        return None
-
-# -------------------------
-# マニュアル生成（図・表も含める）
-# -------------------------
-def generate_manual(big_field: str, sub_field: str):
-    prompt = f"""
-    あなたは臨床工学技士国家試験の専門講師です。
-    次の分野について、学習者向けに段階的なマニュアルを作成してください。
-
-    大分類: {big_field}
-    中分類: {sub_field}
-
-    出力は必ず JSON のみで返してください。
-    {{
-      "overview": "概要（全体像と学習の優先度）",
-      "details": "詳細解説（定義・公式・臨床応用・試験で狙われやすい知識）",
-      "pitfalls": "誤答ポイント（混同しやすい用語・計算の落とし穴・試験特有の注意点）",
-      "diagram": "Mermaid記法での図解（例: graph TD; A-->B; B-->C;）",
-      "table": [["項目","説明"],["キーワード1","解説1"],["キーワード2","解説2"]]
-    }}
-    """
-    raw = gpt_text(prompt, temperature=0.2)
-    return safe_json_loads(raw)
-
-# -------------------------
-# 図解問題生成
-# -------------------------
-def generate_diagram(big_field: str, sub_field: str):
-    prompt = f"""
-    臨床工学技士向けの{sub_field}に関する図解問題を1問作成してください。
-    出力は必ず JSON のみで返してください。
-    {{
-      "question": "問題文",
-      "options": ["選択肢A", "選択肢B", "選択肢C"],
-      "answer": "正解の選択肢",
-      "explanation": "解説文",
-      "mermaid": "graph TD; ..."
-    }}
-    """
-    raw = gpt_text(prompt, temperature=0.1)
-    return safe_json_loads(raw)
-
-# -------------------------
-# 図解モード本体
-# -------------------------
 def render():
-    st.subheader("図解問題モード")
+    profession = st.session_state.get("profession", "臨床工学技士")
+    st.subheader(f"図解モード（{profession}向け）")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        big_field = st.selectbox("大分類を選んでください", list(field_dict.keys()), key="diagram_big")
-        sub_field = st.selectbox("中分類を選んでください", field_dict[big_field], key="diagram_sub")
-    with col2:
-        mode = st.radio(
-            "モードを選んでください",
-            ["マニュアル", "閲覧", "解答"],
-            horizontal=True,
-            key="diagram_mode"
-        )
+    fields = major_options_dict.get(profession, {})
+    major = st.selectbox("大分類を選択してください", list(fields.keys()))
+    middle = st.selectbox("中分類を選択してください", fields[major])
 
-    # --- マニュアルモード ---
-    if mode == "マニュアル":
-        st.info(f"【{big_field} - {sub_field}】のマニュアル")
-
-        if st.button("マニュアルを生成する", key="manual_generate"):
-            data = generate_manual(big_field, sub_field)
-            if data:
-                st.session_state["manual_data"] = data
-
-        manual_data = st.session_state.get("manual_data")
-        if manual_data:
-            tab1, tab2, tab3 = st.tabs(["概要", "詳細解説", "誤答ポイント"])
-            with tab1:
-                st.markdown(f"### 概要\n:blue[{manual_data['overview']}]")
-                if "diagram" in manual_data:
-                    render_mermaid(manual_data["diagram"])
-            with tab2:
-                st.markdown(f"### 詳細解説\n{manual_data['details']}")
-                if "table" in manual_data:
-                    st.table(manual_data["table"])
-            with tab3:
-                st.warning(manual_data['pitfalls'])
-        return
-
-    # --- 問題生成 ---
-    if st.button("問題を生成する", key="diagram_generate"):
-        data = generate_diagram(big_field, sub_field)
-        if data:
-            st.session_state["diagram_data"] = data
-            st.session_state["diagram_answered"] = False
-
-    data = st.session_state.get("diagram_data")
-    if data:
-        st.markdown(f"**Q. {data['question']}**")
-        render_mermaid(data["mermaid"])
-
-        if mode == "閲覧":
-            st.info(data["explanation"])
-
-        elif mode == "解答":
-            with st.form("diagram_answer_form"):
-                choice = st.radio("回答を選んでください", data["options"], key="diagram_choice")
-                submitted = st.form_submit_button("解答する")
-                if submitted:
-                    st.session_state["diagram_answered"] = True
-                    st.session_state["diagram_choice"] = choice
-
-            if st.session_state.get("diagram_answered", False):
-                correct = (st.session_state["diagram_choice"] == data["answer"])
-                if correct:
+    if st.button("図解問題を生成"):
+        prompt = f"""
+        {profession}向けの{major} - {middle}に関する図解問題を1問作成してください。
+        出力は必ずJSON形式で返してください。
+        {{
+          "question": "問題文",
+          "options": ["選択肢A","選択肢B","選択肢C"],
+          "answer": "正解の選択肢",
+          "explanation": "解説文",
+          "mermaid": "graph TD; ..."
+        }}
+        """
+        raw = gpt_text(prompt, temperature=0.2)
+        try:
+            data = json.loads(raw)
+            st.markdown(f"**Q. {data['question']}**")
+            render_mermaid(data["mermaid"])
+            choice = st.radio("回答を選んでください", data["options"])
+            if st.button("解答する"):
+                if choice == data["answer"]:
                     st.success("正解！ 🎉")
                 else:
                     st.error(f"不正解… 正解は {data['answer']} です")
                 st.info(data["explanation"])
+        except Exception:
+            st.error("JSONパースに失敗しました")
+            st.write(raw)
