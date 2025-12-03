@@ -25,7 +25,7 @@ def profession_select_page():
 
     if st.button("決定"):
         st.session_state["profession"] = profession
-        st.experimental_rerun()
+        st.rerun()  # ← 修正ポイント（experimental_rerun → rerun）
 
 def main_page():
     st.title("医療学習シミュレーション")
@@ -45,7 +45,7 @@ def main_page():
     # 以下はモード選択処理（省略）
 
 def main():
-    st.title("医療学習シミュレーション")  # ← ログイン前もタイトルを表示
+    st.title("医療学習シミュレーション")  # ログイン前もタイトルを表示
     login_google()
 
     if "user_id" not in st.session_state:
