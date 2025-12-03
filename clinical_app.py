@@ -79,12 +79,6 @@ def main_page():
         elif mode == "シナリオRPG":
             scenario_rpg.render()
 
-    elif category == "分析系":
-        mode = st.sidebar.radio("モード", ["ダッシュボード", "弱点抽出"])
-        if mode == "ダッシュボード":
-            dashboard.render()
-        elif mode == "弱点抽出":
-            weakpoints.render()
 
 def main():
     st.title("医療学習シミュレーション")
