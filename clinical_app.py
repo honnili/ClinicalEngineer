@@ -30,15 +30,10 @@ def main_page():
     st.title("医療学習シミュレーション")
     st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。AIによる解答、解説なので100%という保証はありません。")
 
-    login_google()
-    if "user_id" not in st.session_state:
-        st.info("ログインして学習しよう！^-^")
-        return
-
     st.success(f"ログイン中: {st.session_state['nickname']}")
     st.success(f"選択された職業: {st.session_state['profession']}")
 
-    # --- サイドバーで職業変更可能 ---
+    # サイドバーで職業変更可能
     with st.sidebar:
         st.session_state["profession"] = st.selectbox(
             "職業を変更する",
@@ -46,7 +41,7 @@ def main_page():
             index=["臨床工学技士", "歯科衛生士"].index(st.session_state["profession"])
         )
 
-    # --- サイドバーでカテゴリ選択 ---
+    # サイドバーでカテゴリ選択
     st.sidebar.title("モード選択")
     category = st.sidebar.selectbox(
         "カテゴリを選んでください",
@@ -73,8 +68,7 @@ def main_page():
             company.render()
 
     elif category == "論文系":
-        mode = st.sidebar.radio("モード", ["論文参照モード"])
-        if mode == "論文参照モード":
+        if st.sidebar.radio("モード", ["論文参照モード"]) == "論文参照モード":
             research.render()
 
     elif category == "シナリオ系":
@@ -92,7 +86,14 @@ def main_page():
             weakpoints.render()
 
 def main():
-    # 職業未選択なら専用ページへ
+    # --- ログイン処理 ---
+    login_google()
+
+    if "user_id" not in st.session_state:
+        st.info("Googleでログインしてください")
+        return
+
+    # --- 職業選択ページへ ---
     if "profession" not in st.session_state:
         profession_select_page()
     else:
