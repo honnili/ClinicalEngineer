@@ -29,7 +29,6 @@ def profession_select_page():
         st.rerun()
 
 def main_page():
-    st.title("医療学習シミュレーション")
     st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。AIによる解答、解説なので100%という保証はありません。")
 
     st.success(f"ログイン中: {st.session_state['nickname']}")
@@ -94,7 +93,7 @@ def main():
     login_google()
 
     if "user_id" not in st.session_state:
-        st.info("Googleでログインしてください")
+        st.info("Googleでログインして学習しよう！")
         return
 
     # --- 職業選択ページへ ---
