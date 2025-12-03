@@ -1,9 +1,26 @@
 import streamlit as st
 import json
+import re
 from services.gpt_utils import gpt_text
 from services.diagram_utils import render_mermaid
 
-# 職業ごとのフィルター
+# --- JSON安全パース関数（二重構造にも対応） ---
+def safe_json_loads(text: str):
+    try:
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            return None
+        outer = json.loads(match.group(0))
+        # {"text":"{...}"} の形ならさらにパース
+        if isinstance(outer, dict) and "text" in outer and isinstance(outer["text"], str):
+            inner_match = re.search(r"\{.*\}", outer["text"], re.DOTALL)
+            if inner_match:
+                return json.loads(inner_match.group(0))
+        return outer
+    except Exception:
+        return None
+
+# --- 職業ごとのフィルター ---
 major_options_dict = {
     "臨床工学技士": {
         "呼吸": ["人工呼吸器", "酸素療法", "血液ガス", "換気モニタリング"],
@@ -37,8 +54,12 @@ def render():
         }}
         """
         raw = gpt_text(prompt, temperature=0.2)
-        try:
-            data = json.loads(raw)
+        data = safe_json_loads(raw)
+
+        if not data:
+            st.error("JSONパースに失敗しました")
+            st.write(raw)
+        else:
             st.markdown(f"**Q. {data['question']}**")
             render_mermaid(data["mermaid"])
             choice = st.radio("回答を選んでください", data["options"])
@@ -48,6 +69,3 @@ def render():
                 else:
                     st.error(f"不正解… 正解は {data['answer']} です")
                 st.info(data["explanation"])
-        except Exception:
-            st.error("JSONパースに失敗しました")
-            st.write(raw)

@@ -11,28 +11,32 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("医療学習シミュレーション")
-st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。AIによる解答、解説なので100%という保証はありません。")
-
 init_db()
 
-def main():
-    # --- ログイン処理 ---
-    login_google()
+def profession_select_page():
+    st.title("職業選択ページ")
+    st.write("まずはあなたの職業を選んでください")
 
+    profession = st.radio(
+        "職業を選択してください",
+        ["臨床工学技士", "歯科衛生士"]
+    )
+
+    if st.button("決定"):
+        st.session_state["profession"] = profession
+        st.experimental_rerun()  # → メイン画面へ遷移
+
+def main_page():
+    st.title("医療学習シミュレーション")
+    st.write("国家試験対策や臨床現場の理解をサポートを目的とした学習アプリです。AIによる解答、解説なので100%という保証はありません。")
+
+    login_google()
     if "user_id" not in st.session_state:
         st.info("ログインして学習しよう！^-^")
         return
 
     st.success(f"ログイン中: {st.session_state['nickname']}")
-
-    # --- 職業選択（初回必須） ---
-    if "profession" not in st.session_state:
-        st.session_state["profession"] = st.selectbox(
-            "職業を選んでください",
-            ["臨床工学技士", "歯科衛生士"]
-        )
-        st.success(f"選択された職業: {st.session_state['profession']}")
+    st.success(f"選択された職業: {st.session_state['profession']}")
 
     # --- サイドバーで職業変更可能 ---
     with st.sidebar:
@@ -49,7 +53,6 @@ def main():
         ["学習系", "論文系", "シナリオ系", "分析系"]
     )
 
-    # --- 学習系 ---
     if category == "学習系":
         mode = st.sidebar.radio("モード", [
             "デイリー問題",
@@ -69,13 +72,11 @@ def main():
         elif mode == "国家試験モード":
             company.render()
 
-    # --- 論文系 ---
     elif category == "論文系":
         mode = st.sidebar.radio("モード", ["論文参照モード"])
         if mode == "論文参照モード":
             research.render()
 
-    # --- シナリオ系 ---
     elif category == "シナリオ系":
         mode = st.sidebar.radio("モード", ["多職種共同モード", "シナリオRPG"])
         if mode == "多職種共同モード":
@@ -83,13 +84,19 @@ def main():
         elif mode == "シナリオRPG":
             scenario_rpg.render()
 
-    # --- 分析系 ---
     elif category == "分析系":
         mode = st.sidebar.radio("モード", ["ダッシュボード", "弱点抽出"])
         if mode == "ダッシュボード":
             dashboard.render()
         elif mode == "弱点抽出":
             weakpoints.render()
+
+def main():
+    # 職業未選択なら専用ページへ
+    if "profession" not in st.session_state:
+        profession_select_page()
+    else:
+        main_page()
 
 if __name__ == "__main__":
     main()
