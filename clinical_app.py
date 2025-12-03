@@ -14,7 +14,6 @@ st.set_page_config(
 init_db()
 
 def profession_select_page():
-    st.title("医療学習シミュレーション")
     st.subheader("職業選択ページ")
     st.write("まずはあなたの職業を選んでください")
 
